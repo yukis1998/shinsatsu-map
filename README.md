@@ -175,3 +175,10 @@
 2. **Issueの見積もりが難しい**：どこまで理解していて何が分からないかが不明瞭だと、開発期間内に収まらないリスクがある。
 
 そこで、**MVPでは地図を最小限（一覧＋簡易表示）に留め、本リリースでLeafletを本格導入する段階的アプローチ**を取ります。地図部分は本リリース前にLeaflet単体でキャッチアップ→技術検証したうえで組み込む形が理想と考えています。
+
+## ER図
+<img width="680" height="562" alt="ランテック卒業課題3_ER図" src="https://github.com/user-attachments/assets/9d2a1e89-5b43-489d-bf81-1fa036321401" />
+
+- 主なテーブル：users / spots / bill_types / spot_bill_types
+- spots と bill_types の多対多は、中間テーブル spot_bill_types で解消
+- お問い合わせはメール送信想定のため、テーブル化していない（DB化なし）
