@@ -5,8 +5,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: shinsatsu
+    # ホスト側は 5433。既存の Postgres(5432) と衝突しないため。
+    # api コンテナは内部ネットワーク（db:5432）で接続するので影響しない。
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
