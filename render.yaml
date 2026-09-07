@@ -1,0 +1,29 @@
+# Render Blueprint — バックエンド(FastAPI) + PostgreSQL を一括定義。
+# Render Dashboard → New → Blueprint → このリポジトリを選択 → Apply で構築される。
+# DATABASE_URL は DB から自動注入、SECRET_KEY は自動生成されるため手入力不要。
+databases:
+  - name: shinsatsu-db
+    databaseName: shinsatsu
+    plan: free
+
+services:
+  - type: web
+    name: shinsatsu-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shinsatsu-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      # フロント(Vercel)の URL が決まったら、その値に更新する。
+      - key: BACKEND_CORS_ORIGINS
+        sync: false
