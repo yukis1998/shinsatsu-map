@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { API_BASE } from "@/lib/api";
-import { type AuthUser, clearAuth, getToken, getUser } from "@/lib/auth";
+import {
+  AUTH_CHANGED_EVENT,
+  type AuthUser,
+  clearAuth,
+  getToken,
+  getUser,
+} from "@/lib/auth";
 
 export default function AuthStatus() {
   const router = useRouter();
@@ -13,8 +19,16 @@ export default function AuthStatus() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setUser(getUser());
+    const sync = () => setUser(getUser());
+    sync();
     setReady(true);
+    // 同一タブ（ログイン/ログアウト）と別タブ（storage）両方で更新
+    window.addEventListener(AUTH_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   async function handleLogout() {

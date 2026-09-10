@@ -1,11 +1,21 @@
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
+export const AUTH_CHANGED_EVENT = "auth-changed";
+
 export type AuthUser = {
   id: number;
   email: string;
   display_name: string;
 };
+
+function notifyAuthChanged(): void {
+  try {
+    window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+  } catch {
+    // SSR やイベント不可環境では無視
+  }
+}
 
 export function setAuth(token: string, user: AuthUser): void {
   try {
@@ -14,6 +24,7 @@ export function setAuth(token: string, user: AuthUser): void {
   } catch {
     // localStorage 不可（プライベートモード等）は無視
   }
+  notifyAuthChanged();
 }
 
 export function getToken(): string | null {
@@ -40,4 +51,5 @@ export function clearAuth(): void {
   } catch {
     // 無視
   }
+  notifyAuthChanged();
 }
