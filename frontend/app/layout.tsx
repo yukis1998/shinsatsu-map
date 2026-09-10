@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import AuthStatus from "./components/AuthStatus";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,7 +17,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <header className="site-header">
+          <Link href="/" className="brand">
+            新札マップ
+          </Link>
+          <AuthStatus />
+        </header>
+        {children}
+      </body>
     </html>
   );
 }
