@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,17 @@ router = APIRouter(prefix="/spots", tags=["spots"])
 def list_spots(db: Session = Depends(get_db)) -> list[Spot]:
     """スポット一覧（認証不要）。新しい順。"""
     return list(db.scalars(select(Spot).order_by(Spot.created_at.desc())))
+
+
+@router.get("/{spot_id}", response_model=SpotRead)
+def get_spot(spot_id: int, db: Session = Depends(get_db)) -> Spot:
+    """スポット詳細（認証不要）。存在しなければ404。"""
+    spot = db.get(Spot, spot_id)
+    if spot is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="スポットが見つかりません"
+        )
+    return spot
 
 
 @router.post("", response_model=SpotRead, status_code=status.HTTP_201_CREATED)

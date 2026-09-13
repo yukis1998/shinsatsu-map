@@ -80,27 +80,32 @@ export default function SpotsPage() {
 
       {state === "loaded" &&
         spots.map((s) => (
-          <article
+          <Link
             key={s.id}
-            style={{
-              background: "#fff",
-              border: "1px solid #e6e8eb",
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 12,
-            }}
+            href={`/spots/${s.id}`}
+            style={{ textDecoration: "none", color: "inherit", display: "block" }}
           >
-            <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>{s.name}</h2>
-            <p style={{ margin: "0 0 4px", color: "#333" }}>{s.address}</p>
-            {s.description && (
-              <p style={{ margin: "0 0 4px", color: "#555", whiteSpace: "pre-wrap" }}>
-                {s.description}
+            <article
+              style={{
+                background: "#fff",
+                border: "1px solid #e6e8eb",
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 12,
+              }}
+            >
+              <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>{s.name}</h2>
+              <p style={{ margin: "0 0 4px", color: "#333" }}>{s.address}</p>
+              {s.description && (
+                <p style={{ margin: "0 0 4px", color: "#555", whiteSpace: "pre-wrap" }}>
+                  {s.description}
+                </p>
+              )}
+              <p style={{ margin: 0, color: "#888", fontSize: 13 }}>
+                最終確認日: {s.last_confirmed_on ?? "未確認"}
               </p>
-            )}
-            <p style={{ margin: 0, color: "#888", fontSize: 13 }}>
-              最終確認日: {s.last_confirmed_on ?? "未確認"}
-            </p>
-          </article>
+            </article>
+          </Link>
         ))}
     </main>
   );
