@@ -1,10 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { API_BASE } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+
+const MapPicker = dynamic(() => import("../../components/MapPicker"), { ssr: false });
 
 type BillType = { id: number; name: string };
 type Status = "idle" | "loading" | "success" | "error";
@@ -22,6 +25,8 @@ export default function NewSpotPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [billTypes, setBillTypes] = useState<BillType[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
@@ -66,6 +71,8 @@ export default function NewSpotPage() {
           address,
           description: description || null,
           last_confirmed_on: lastConfirmedOn || null,
+          latitude: lat,
+          longitude: lng,
           bill_type_ids: selected,
         }),
       });
@@ -77,6 +84,8 @@ export default function NewSpotPage() {
         setDescription("");
         setLastConfirmedOn("");
         setSelected([]);
+        setLat(null);
+        setLng(null);
       } else if (res.status === 401) {
         setStatus("error");
         setMessage("ログインの有効期限が切れています。再度ログインしてください。");
@@ -168,6 +177,27 @@ export default function NewSpotPage() {
             </div>
           </fieldset>
         )}
+
+        <div>
+          <span style={{ fontSize: 14, color: "#555" }}>
+            場所（地図をクリックして選択・任意）
+          </span>
+          <div style={{ marginTop: 4 }}>
+            <MapPicker
+              lat={lat}
+              lng={lng}
+              onPick={(la, ln) => {
+                setLat(la);
+                setLng(ln);
+              }}
+            />
+          </div>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#888" }}>
+            {lat != null && lng != null
+              ? `選択中: ${lat.toFixed(5)}, ${lng.toFixed(5)}`
+              : "地図をクリックすると位置を登録できます"}
+          </p>
+        </div>
 
         <label>
           メモ（注意点など）

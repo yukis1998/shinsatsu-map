@@ -84,20 +84,25 @@ export default function SpotsPage() {
         }}
       >
         <h1 style={{ fontSize: 26, margin: 0 }}>スポット一覧</h1>
-        <Link
-          href="/spots/new"
-          style={{
-            background: "#1f6feb",
-            color: "#fff",
-            padding: "8px 16px",
-            borderRadius: 8,
-            textDecoration: "none",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
-        >
-          投稿する
-        </Link>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <Link href="/map" style={{ fontSize: 14 }}>
+            地図で見る
+          </Link>
+          <Link
+            href="/spots/new"
+            style={{
+              background: "#1f6feb",
+              color: "#fff",
+              padding: "8px 16px",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            投稿する
+          </Link>
+        </div>
       </div>
 
       <form
