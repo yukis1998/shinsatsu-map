@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -13,9 +13,23 @@ router = APIRouter(prefix="/spots", tags=["spots"])
 
 
 @router.get("", response_model=list[SpotRead])
-def list_spots(db: Session = Depends(get_db)) -> list[Spot]:
-    """スポット一覧（認証不要）。新しい順。"""
-    return list(db.scalars(select(Spot).order_by(Spot.created_at.desc())))
+def list_spots(
+    q: str | None = None,
+    bill_type_id: int | None = None,
+    db: Session = Depends(get_db),
+) -> list[Spot]:
+    """スポット一覧（認証不要）。新しい順。
+
+    q: 店名/住所の部分一致（大文字小文字を無視）。
+    bill_type_id: 対応紙幣での絞り込み。
+    """
+    stmt = select(Spot).order_by(Spot.created_at.desc())
+    if q:
+        like = f"%{q}%"
+        stmt = stmt.where(or_(Spot.name.ilike(like), Spot.address.ilike(like)))
+    if bill_type_id is not None:
+        stmt = stmt.where(Spot.bill_types.any(BillType.id == bill_type_id))
+    return list(db.scalars(stmt))
 
 
 @router.get("/{spot_id}", response_model=SpotRead)
