@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
+from app.models.bill_type import BillType
 from app.models.spot import Spot
 from app.models.user import User
 from app.schemas.spot import SpotCreate, SpotRead
@@ -35,7 +36,12 @@ def create_spot(
     current: User = Depends(get_current_user),
 ) -> Spot:
     """スポット投稿（ログイン必須）。投稿者は現在のユーザー。"""
-    spot = Spot(**payload.model_dump(), user_id=current.id)
+    data = payload.model_dump(exclude={"bill_type_ids"})
+    spot = Spot(**data, user_id=current.id)
+    if payload.bill_type_ids:
+        spot.bill_types = list(
+            db.scalars(select(BillType).where(BillType.id.in_(payload.bill_type_ids)))
+        )
     db.add(spot)
     db.commit()
     db.refresh(spot)

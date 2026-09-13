@@ -1,9 +1,14 @@
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, Float, ForeignKey, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.associations import spot_bill_types
+
+if TYPE_CHECKING:
+    from app.models.bill_type import BillType
 
 
 class Spot(Base):
@@ -21,4 +26,11 @@ class Spot(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    # 対応紙幣（多対多）。一覧のN+1を避けるため selectin で一括ロード。
+    bill_types: Mapped[list["BillType"]] = relationship(
+        secondary=spot_bill_types,
+        lazy="selectin",
+        order_by="BillType.sort_order",
     )
