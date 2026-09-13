@@ -15,6 +15,7 @@ type Spot = {
   longitude: number | null;
   user_id: number;
   created_at: string;
+  bill_types: { id: number; name: string }[];
 };
 
 type State = "loading" | "loaded" | "error";
@@ -96,6 +97,11 @@ export default function SpotsPage() {
             >
               <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>{s.name}</h2>
               <p style={{ margin: "0 0 4px", color: "#333" }}>{s.address}</p>
+              {s.bill_types.length > 0 && (
+                <p style={{ margin: "0 0 4px", color: "#1f6feb", fontSize: 13 }}>
+                  対応紙幣: {s.bill_types.map((b) => b.name).join(" / ")}
+                </p>
+              )}
               {s.description && (
                 <p style={{ margin: "0 0 4px", color: "#555", whiteSpace: "pre-wrap" }}>
                   {s.description}

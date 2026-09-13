@@ -16,6 +16,7 @@ type Spot = {
   longitude: number | null;
   user_id: number;
   created_at: string;
+  bill_types: { id: number; name: string }[];
 };
 
 type State = "loading" | "loaded" | "notfound" | "error";
@@ -79,6 +80,13 @@ export default function SpotDetailPage() {
 
           <div style={dtStyle}>住所</div>
           <p style={ddStyle}>{spot.address}</p>
+
+          {spot.bill_types.length > 0 && (
+            <>
+              <div style={dtStyle}>対応紙幣</div>
+              <p style={ddStyle}>{spot.bill_types.map((b) => b.name).join(" / ")}</p>
+            </>
+          )}
 
           {spot.description && (
             <>

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { API_BASE } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
+type BillType = { id: number; name: string };
 type Status = "idle" | "loading" | "success" | "error";
 
 const inputStyle: React.CSSProperties = {
@@ -19,6 +20,8 @@ const inputStyle: React.CSSProperties = {
 
 export default function NewSpotPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [billTypes, setBillTypes] = useState<BillType[]>([]);
+  const [selected, setSelected] = useState<number[]>([]);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
@@ -28,7 +31,19 @@ export default function NewSpotPage() {
 
   useEffect(() => {
     setAuthed(!!getToken());
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/bill-types`);
+        if (res.ok) setBillTypes((await res.json()) as BillType[]);
+      } catch {
+        // マスタ取得失敗時はチェックボックスなしで投稿可能
+      }
+    })();
   }, []);
+
+  function toggle(id: number) {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +66,7 @@ export default function NewSpotPage() {
           address,
           description: description || null,
           last_confirmed_on: lastConfirmedOn || null,
+          bill_type_ids: selected,
         }),
       });
       if (res.status === 201) {
@@ -60,6 +76,7 @@ export default function NewSpotPage() {
         setAddress("");
         setDescription("");
         setLastConfirmedOn("");
+        setSelected([]);
       } else if (res.status === 401) {
         setStatus("error");
         setMessage("ログインの有効期限が切れています。再度ログインしてください。");
@@ -76,12 +93,10 @@ export default function NewSpotPage() {
     }
   }
 
-  // 認証チェック中
   if (authed === null) {
     return <main className="container" />;
   }
 
-  // 未ログイン
   if (!authed) {
     return (
       <main className="container" style={{ maxWidth: 480 }}>
@@ -135,8 +150,27 @@ export default function NewSpotPage() {
             style={inputStyle}
           />
         </label>
+
+        {billTypes.length > 0 && (
+          <fieldset style={{ border: "1px solid #e6e8eb", borderRadius: 8, padding: 12 }}>
+            <legend style={{ fontSize: 14, color: "#555" }}>対応紙幣（複数選択可）</legend>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+              {billTypes.map((b) => (
+                <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(b.id)}
+                    onChange={() => toggle(b.id)}
+                  />
+                  {b.name}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
         <label>
-          メモ（対応紙幣・注意点など）
+          メモ（注意点など）
           <textarea
             rows={3}
             maxLength={2000}
