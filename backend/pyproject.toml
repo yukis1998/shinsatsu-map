@@ -3,6 +3,12 @@ pythonpath = ["."]
 addopts = "-q"
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["app"]
+# init_db.py は起動時のテーブル作成/シード用スクリプト（デプロイで実行・実地検証済）。
+# ユニットテスト対象外のため計測から除外する。
+omit = ["app/init_db.py"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
