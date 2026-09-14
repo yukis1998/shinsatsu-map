@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { API_BASE } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 
 type Spot = {
   id: number;
@@ -36,9 +37,11 @@ export default function SpotDetailPage() {
   const id = params?.id as string | undefined;
   const [spot, setSpot] = useState<Spot | null>(null);
   const [state, setState] = useState<State>("loading");
+  const [meId, setMeId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
+    setMeId(getUser()?.id ?? null);
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/spots/${id}`);
@@ -97,6 +100,12 @@ export default function SpotDetailPage() {
 
           <div style={dtStyle}>最終確認日</div>
           <p style={ddStyle}>{spot.last_confirmed_on ?? "未確認"}</p>
+
+          {meId === spot.user_id && (
+            <p style={{ marginTop: 16 }}>
+              <Link href={`/spots/${spot.id}/edit`}>編集する</Link>
+            </p>
+          )}
         </article>
       )}
     </main>

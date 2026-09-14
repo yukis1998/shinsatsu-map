@@ -60,3 +60,33 @@ def create_spot(
     db.commit()
     db.refresh(spot)
     return spot
+
+
+@router.put("/{spot_id}", response_model=SpotRead)
+def update_spot(
+    spot_id: int,
+    payload: SpotCreate,
+    db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
+) -> Spot:
+    """スポット編集（自分の投稿のみ）。他人の投稿は403、無ければ404。"""
+    spot = db.get(Spot, spot_id)
+    if spot is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="スポットが見つかりません"
+        )
+    if spot.user_id != current.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="編集する権限がありません"
+        )
+    data = payload.model_dump(exclude={"bill_type_ids"})
+    for key, value in data.items():
+        setattr(spot, key, value)
+    spot.bill_types = (
+        list(db.scalars(select(BillType).where(BillType.id.in_(payload.bill_type_ids))))
+        if payload.bill_type_ids
+        else []
+    )
+    db.commit()
+    db.refresh(spot)
+    return spot
