@@ -1,15 +1,32 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
-from app.models.bill_type import BillType
 from app.models.spot import Spot
 from app.models.user import User
 from app.schemas.spot import SpotCreate, SpotRead
+from app.services import spot_service
 
 router = APIRouter(prefix="/spots", tags=["spots"])
+
+
+def _get_or_404(db: Session, spot_id: int) -> Spot:
+    spot = spot_service.get_spot(db, spot_id)
+    if spot is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="スポットが見つかりません"
+        )
+    return spot
+
+
+def _get_owned_or_error(db: Session, spot_id: int, current: User, action: str) -> Spot:
+    spot = _get_or_404(db, spot_id)
+    if spot.user_id != current.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"{action}する権限がありません"
+        )
+    return spot
 
 
 @router.get("", response_model=list[SpotRead])
@@ -18,30 +35,14 @@ def list_spots(
     bill_type_id: int | None = None,
     db: Session = Depends(get_db),
 ) -> list[Spot]:
-    """スポット一覧（認証不要）。新しい順。
-
-    q: 店名/住所の部分一致（大文字小文字を無視）。
-    bill_type_id: 対応紙幣での絞り込み。
-    """
-    # created_at 同秒の並びを決定的にするため id を副次キーにする
-    stmt = select(Spot).order_by(Spot.created_at.desc(), Spot.id.desc())
-    if q:
-        like = f"%{q}%"
-        stmt = stmt.where(or_(Spot.name.ilike(like), Spot.address.ilike(like)))
-    if bill_type_id is not None:
-        stmt = stmt.where(Spot.bill_types.any(BillType.id == bill_type_id))
-    return list(db.scalars(stmt))
+    """スポット一覧（認証不要）。q=店名/住所の部分一致、bill_type_id=対応紙幣で絞り込み。"""
+    return spot_service.list_spots(db, q=q, bill_type_id=bill_type_id)
 
 
 @router.get("/{spot_id}", response_model=SpotRead)
 def get_spot(spot_id: int, db: Session = Depends(get_db)) -> Spot:
     """スポット詳細（認証不要）。存在しなければ404。"""
-    spot = db.get(Spot, spot_id)
-    if spot is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="スポットが見つかりません"
-        )
-    return spot
+    return _get_or_404(db, spot_id)
 
 
 @router.post("", response_model=SpotRead, status_code=status.HTTP_201_CREATED)
@@ -51,16 +52,7 @@ def create_spot(
     current: User = Depends(get_current_user),
 ) -> Spot:
     """スポット投稿（ログイン必須）。投稿者は現在のユーザー。"""
-    data = payload.model_dump(exclude={"bill_type_ids"})
-    spot = Spot(**data, user_id=current.id)
-    if payload.bill_type_ids:
-        spot.bill_types = list(
-            db.scalars(select(BillType).where(BillType.id.in_(payload.bill_type_ids)))
-        )
-    db.add(spot)
-    db.commit()
-    db.refresh(spot)
-    return spot
+    return spot_service.create_spot(db, current.id, payload)
 
 
 @router.put("/{spot_id}", response_model=SpotRead)
@@ -70,27 +62,9 @@ def update_spot(
     db: Session = Depends(get_db),
     current: User = Depends(get_current_user),
 ) -> Spot:
-    """スポット編集（自分の投稿のみ）。他人の投稿は403、無ければ404。"""
-    spot = db.get(Spot, spot_id)
-    if spot is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="スポットが見つかりません"
-        )
-    if spot.user_id != current.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="編集する権限がありません"
-        )
-    data = payload.model_dump(exclude={"bill_type_ids"})
-    for key, value in data.items():
-        setattr(spot, key, value)
-    spot.bill_types = (
-        list(db.scalars(select(BillType).where(BillType.id.in_(payload.bill_type_ids))))
-        if payload.bill_type_ids
-        else []
-    )
-    db.commit()
-    db.refresh(spot)
-    return spot
+    """スポット編集（自分の投稿のみ）。他人は403、無ければ404。"""
+    spot = _get_owned_or_error(db, spot_id, current, "編集")
+    return spot_service.update_spot(db, spot, payload)
 
 
 @router.delete("/{spot_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -100,14 +74,5 @@ def delete_spot(
     current: User = Depends(get_current_user),
 ) -> None:
     """スポット削除（自分の投稿のみ）。他人は403、無ければ404。"""
-    spot = db.get(Spot, spot_id)
-    if spot is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="スポットが見つかりません"
-        )
-    if spot.user_id != current.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="削除する権限がありません"
-        )
-    db.delete(spot)
-    db.commit()
+    spot = _get_owned_or_error(db, spot_id, current, "削除")
+    spot_service.delete_spot(db, spot)
