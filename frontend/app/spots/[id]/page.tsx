@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { API_BASE } from "@/lib/api";
-import { getUser } from "@/lib/auth";
+import { getToken, getUser } from "@/lib/auth";
 
 type Spot = {
   id: number;
@@ -34,6 +34,7 @@ const ddStyle: React.CSSProperties = {
 
 export default function SpotDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string | undefined;
   const [spot, setSpot] = useState<Spot | null>(null);
   const [state, setState] = useState<State>("loading");
@@ -57,6 +58,32 @@ export default function SpotDetailPage() {
       }
     })();
   }, [id]);
+
+  async function handleDelete() {
+    if (!spot) return;
+    if (!window.confirm("このスポットを削除しますか？この操作は取り消せません。")) return;
+    const token = getToken();
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/spots/${spot.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        router.push("/spots");
+        router.refresh();
+        return;
+      }
+      if (res.status === 403) alert("削除する権限がありません。");
+      else if (res.status === 401) router.push("/login");
+      else alert(`削除に失敗しました（${res.status}）。`);
+    } catch {
+      alert("通信エラーが発生しました。時間をおいて再度お試しください。");
+    }
+  }
 
   return (
     <main className="container" style={{ maxWidth: 640 }}>
@@ -102,8 +129,22 @@ export default function SpotDetailPage() {
           <p style={ddStyle}>{spot.last_confirmed_on ?? "未確認"}</p>
 
           {meId === spot.user_id && (
-            <p style={{ marginTop: 16 }}>
+            <p style={{ marginTop: 16, display: "flex", gap: 16, alignItems: "center" }}>
               <Link href={`/spots/${spot.id}/edit`}>編集する</Link>
+              <button
+                onClick={handleDelete}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#c5221f",
+                  cursor: "pointer",
+                  padding: 0,
+                  font: "inherit",
+                  textDecoration: "underline",
+                }}
+              >
+                削除する
+              </button>
             </p>
           )}
         </article>

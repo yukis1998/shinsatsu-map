@@ -90,3 +90,23 @@ def update_spot(
     db.commit()
     db.refresh(spot)
     return spot
+
+
+@router.delete("/{spot_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_spot(
+    spot_id: int,
+    db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
+) -> None:
+    """スポット削除（自分の投稿のみ）。他人は403、無ければ404。"""
+    spot = db.get(Spot, spot_id)
+    if spot is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="スポットが見つかりません"
+        )
+    if spot.user_id != current.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="削除する権限がありません"
+        )
+    db.delete(spot)
+    db.commit()
