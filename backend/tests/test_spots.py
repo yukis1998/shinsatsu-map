@@ -106,3 +106,20 @@ def test_delete_missing_and_unauth(client, auth):
     created = client.post("/spots", json=_payload(), headers=auth["headers"]).json()
     assert client.delete("/spots/999999", headers=auth["headers"]).status_code == 404
     assert client.delete(f"/spots/{created['id']}").status_code == 401
+
+
+# --- N+1 ---
+def test_list_avoids_n_plus_one(client, auth, bill_type_ids, query_counter):
+    for i in range(5):
+        client.post(
+            "/spots",
+            json=_payload(name=f"spot{i}", bill_type_ids=bill_type_ids),
+            headers=auth["headers"],
+        )
+    with query_counter() as selects:
+        res = client.get("/spots")
+    assert res.status_code == 200
+    assert len(res.json()) == 5
+    # selectin により「スポット本体」＋「bill_types 一括取得」の少数クエリで済む。
+    # N+1 なら 1 + 5 = 6 件以上になる。
+    assert len(selects) <= 3, f"N+1 の疑い: SELECT が {len(selects)} 件"

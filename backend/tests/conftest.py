@@ -1,6 +1,8 @@
+from contextlib import contextmanager
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -82,3 +84,24 @@ def auth2(client: TestClient) -> dict:
 @pytest.fixture
 def bill_type_ids(client: TestClient) -> list[int]:
     return [b["id"] for b in client.get("/bill-types").json()]
+
+
+@pytest.fixture
+def query_counter():
+    """実行された SELECT 文を数えるコンテキストマネージャを返す（N+1 検出用）。"""
+
+    @contextmanager
+    def _counter():
+        selects: list[str] = []
+
+        def _on(conn, cursor, statement, parameters, context, executemany):
+            if statement.lstrip().upper().startswith("SELECT"):
+                selects.append(statement)
+
+        event.listen(engine, "before_cursor_execute", _on)
+        try:
+            yield selects
+        finally:
+            event.remove(engine, "before_cursor_execute", _on)
+
+    return _counter
