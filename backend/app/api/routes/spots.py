@@ -23,7 +23,8 @@ def list_spots(
     q: 店名/住所の部分一致（大文字小文字を無視）。
     bill_type_id: 対応紙幣での絞り込み。
     """
-    stmt = select(Spot).order_by(Spot.created_at.desc())
+    # created_at 同秒の並びを決定的にするため id を副次キーにする
+    stmt = select(Spot).order_by(Spot.created_at.desc(), Spot.id.desc())
     if q:
         like = f"%{q}%"
         stmt = stmt.where(or_(Spot.name.ilike(like), Spot.address.ilike(like)))
