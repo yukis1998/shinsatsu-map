@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.bill_type import BillTypeRead
 
@@ -13,6 +13,14 @@ class SpotCreate(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     bill_type_ids: list[int] = Field(default_factory=list)
+
+    @field_validator("last_confirmed_on")
+    @classmethod
+    def _reject_future_date(cls, v: date | None) -> date | None:
+        """最終確認日に未来日は許可しない（「確認済み」という意味に矛盾するため）。"""
+        if v is not None and v > date.today():
+            raise ValueError("最終確認日は今日以前の日付を指定してください")
+        return v
 
 
 class SpotRead(BaseModel):

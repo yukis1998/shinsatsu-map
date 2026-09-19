@@ -18,7 +18,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
     if existing is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="このメールアドレスは既に登録されています",
+            detail="このメールアドレスは使用できません",
         )
 
     user = User(

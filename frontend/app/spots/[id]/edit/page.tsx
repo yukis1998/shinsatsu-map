@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 import { API_BASE } from "@/lib/api";
 import { getToken, getUser } from "@/lib/auth";
+import { todayStr } from "@/lib/date";
 
 const MapPicker = dynamic(() => import("../../../components/MapPicker"), { ssr: false });
 
@@ -87,6 +88,11 @@ export default function EditSpotPage() {
     const token = getToken();
     if (!token) {
       setLoad("unauth");
+      return;
+    }
+    if (lastConfirmedOn && lastConfirmedOn > todayStr()) {
+      setStatus("error");
+      setMessage("最終確認日は今日以前の日付を指定してください。");
       return;
     }
     setStatus("loading");
@@ -195,7 +201,7 @@ export default function EditSpotPage() {
         </label>
         <label>
           最終確認日
-          <input type="date" value={lastConfirmedOn} onChange={(e) => setLastConfirmedOn(e.target.value)} style={inputStyle} />
+          <input type="date" max={todayStr()} value={lastConfirmedOn} onChange={(e) => setLastConfirmedOn(e.target.value)} style={inputStyle} />
         </label>
 
         <button

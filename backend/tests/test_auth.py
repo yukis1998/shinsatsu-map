@@ -16,6 +16,8 @@ def test_register_duplicate_email(client):
     client.post("/auth/register", json=payload)
     res = client.post("/auth/register", json={**payload, "display_name": "次郎"})
     assert res.status_code == 409
+    # メールの存在を第三者に知らせない濁した文言にする（アカウント列挙対策）
+    assert res.json()["detail"] == "このメールアドレスは使用できません"
 
 
 def test_register_invalid_email(client):

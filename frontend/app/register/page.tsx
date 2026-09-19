@@ -38,7 +38,7 @@ export default function RegisterPage() {
         setMessage("登録が完了しました。ログインしてください。");
       } else if (res.status === 409) {
         setStatus("error");
-        setMessage("このメールアドレスは既に登録されています。");
+        setMessage("このメールアドレスは使用できません。");
       } else if (res.status === 422) {
         setStatus("error");
         setMessage("入力内容を確認してください（メール形式／パスワードは8文字以上）。");

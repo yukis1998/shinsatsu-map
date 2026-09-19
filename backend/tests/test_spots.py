@@ -1,3 +1,6 @@
+from datetime import date, timedelta
+
+
 def _payload(**kw):
     base = {"name": "テスト銀行", "address": "東京都千代田区1-1"}
     base.update(kw)
@@ -24,6 +27,33 @@ def test_create_success_with_bill_types(client, auth, bill_type_ids):
 
 def test_create_validation_error(client, auth):
     res = client.post("/spots", json={"name": "", "address": "住所"}, headers=auth["headers"])
+    assert res.status_code == 422
+
+
+def test_create_rejects_future_last_confirmed_on(client, auth):
+    future = (date.today() + timedelta(days=1)).isoformat()
+    res = client.post(
+        "/spots", json=_payload(last_confirmed_on=future), headers=auth["headers"]
+    )
+    assert res.status_code == 422
+
+
+def test_create_allows_today_last_confirmed_on(client, auth):
+    today = date.today().isoformat()
+    res = client.post(
+        "/spots", json=_payload(last_confirmed_on=today), headers=auth["headers"]
+    )
+    assert res.status_code == 201
+
+
+def test_update_rejects_future_last_confirmed_on(client, auth):
+    created = client.post("/spots", json=_payload(), headers=auth["headers"]).json()
+    future = (date.today() + timedelta(days=1)).isoformat()
+    res = client.put(
+        f"/spots/{created['id']}",
+        json=_payload(last_confirmed_on=future),
+        headers=auth["headers"],
+    )
     assert res.status_code == 422
 
 
