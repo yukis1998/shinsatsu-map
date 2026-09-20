@@ -95,6 +95,11 @@ export default function EditSpotPage() {
       setMessage("最終確認日は今日以前の日付を指定してください。");
       return;
     }
+    if (selected.length === 0) {
+      setStatus("error");
+      setMessage("対応紙幣を1つ以上選択してください。");
+      return;
+    }
     setStatus("loading");
     setMessage("");
     try {
@@ -173,7 +178,9 @@ export default function EditSpotPage() {
 
         {billTypes.length > 0 && (
           <fieldset style={{ border: "1px solid #e6e8eb", borderRadius: 8, padding: 12 }}>
-            <legend style={{ fontSize: 14, color: "#555" }}>対応紙幣（複数選択可）</legend>
+            <legend style={{ fontSize: 14, color: "#555" }}>
+              対応紙幣（1つ以上選択） <span style={{ color: "#c5221f" }}>*</span>
+            </legend>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               {billTypes.map((b) => (
                 <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>

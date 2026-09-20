@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { API_BASE } from "@/lib/api";
@@ -17,6 +18,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -34,8 +36,9 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, display_name: displayName, password }),
       });
       if (res.status === 201) {
-        setStatus("success");
-        setMessage("登録が完了しました。ログインしてください。");
+        // 登録成功。1クリック減らすためログイン画面へ遷移し、完了メッセージはそこで表示。
+        router.push("/login?registered=1");
+        return;
       } else if (res.status === 409) {
         setStatus("error");
         setMessage("このメールアドレスは使用できません。");

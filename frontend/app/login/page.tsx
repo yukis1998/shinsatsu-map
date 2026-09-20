@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { API_BASE } from "@/lib/api";
 import { setAuth } from "@/lib/auth";
@@ -24,6 +24,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [registered, setRegistered] = useState(false);
+
+  useEffect(() => {
+    try {
+      setRegistered(new URLSearchParams(window.location.search).get("registered") === "1");
+    } catch {
+      // クエリ取得不可環境は無視
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,6 +67,15 @@ export default function LoginPage() {
   return (
     <main className="container" style={{ maxWidth: 440 }}>
       <h1 style={{ fontSize: 26, marginBottom: 8 }}>ログイン</h1>
+
+      {registered && (
+        <p
+          role="status"
+          style={{ margin: "0 0 12px", color: "#137333", fontWeight: 600 }}
+        >
+          登録が完了しました。ログインしてください。
+        </p>
+      )}
 
       <form
         onSubmit={handleSubmit}

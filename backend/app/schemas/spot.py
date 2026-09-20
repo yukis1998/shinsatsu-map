@@ -12,7 +12,7 @@ class SpotCreate(BaseModel):
     last_confirmed_on: date | None = None
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
-    bill_type_ids: list[int] = Field(default_factory=list)
+    bill_type_ids: list[int] = Field(min_length=1)
 
     @field_validator("last_confirmed_on")
     @classmethod

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { API_BASE } from "@/lib/api";
@@ -23,6 +24,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function NewSpotPage() {
+  const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [billTypes, setBillTypes] = useState<BillType[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
@@ -63,6 +65,11 @@ export default function NewSpotPage() {
       setMessage("最終確認日は今日以前の日付を指定してください。");
       return;
     }
+    if (selected.length === 0) {
+      setStatus("error");
+      setMessage("対応紙幣を1つ以上選択してください。");
+      return;
+    }
     setStatus("loading");
     setMessage("");
     try {
@@ -83,15 +90,10 @@ export default function NewSpotPage() {
         }),
       });
       if (res.status === 201) {
-        setStatus("success");
-        setMessage("スポットを投稿しました。");
-        setName("");
-        setAddress("");
-        setDescription("");
-        setLastConfirmedOn("");
-        setSelected([]);
-        setLat(null);
-        setLng(null);
+        // 投稿成功。一覧画面へ遷移（最新が先頭に表示される）。
+        router.push("/spots");
+        router.refresh();
+        return;
       } else if (res.status === 401) {
         setStatus("error");
         setMessage("ログインの有効期限が切れています。再度ログインしてください。");
@@ -168,7 +170,9 @@ export default function NewSpotPage() {
 
         {billTypes.length > 0 && (
           <fieldset style={{ border: "1px solid #e6e8eb", borderRadius: 8, padding: 12 }}>
-            <legend style={{ fontSize: 14, color: "#555" }}>対応紙幣（複数選択可）</legend>
+            <legend style={{ fontSize: 14, color: "#555" }}>
+              対応紙幣（1つ以上選択） <span style={{ color: "#c5221f" }}>*</span>
+            </legend>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               {billTypes.map((b) => (
                 <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>

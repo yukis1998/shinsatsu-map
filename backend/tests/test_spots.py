@@ -2,7 +2,8 @@ from datetime import date, timedelta
 
 
 def _payload(**kw):
-    base = {"name": "テスト銀行", "address": "東京都千代田区1-1"}
+    # 対応紙幣は必須（>=1）。conftest が bill_types を id=1,2,3 で毎テスト投入する。
+    base = {"name": "テスト銀行", "address": "東京都千代田区1-1", "bill_type_ids": [1]}
     base.update(kw)
     return base
 
@@ -27,6 +28,12 @@ def test_create_success_with_bill_types(client, auth, bill_type_ids):
 
 def test_create_validation_error(client, auth):
     res = client.post("/spots", json={"name": "", "address": "住所"}, headers=auth["headers"])
+    assert res.status_code == 422
+
+
+def test_create_requires_bill_type(client, auth):
+    # 対応紙幣を1つも選ばない投稿は弾く（データ品質のため）
+    res = client.post("/spots", json=_payload(bill_type_ids=[]), headers=auth["headers"])
     assert res.status_code == 422
 
 
@@ -78,7 +85,11 @@ def test_list_filter_by_bill_type(client, auth, bill_type_ids):
         json=_payload(name="千円あり", bill_type_ids=[bill_type_ids[0]]),
         headers=auth["headers"],
     )
-    client.post("/spots", json=_payload(name="紙幣なし"), headers=auth["headers"])
+    client.post(
+        "/spots",
+        json=_payload(name="別の紙幣", bill_type_ids=[bill_type_ids[1]]),
+        headers=auth["headers"],
+    )
     res = client.get("/spots", params={"bill_type_id": bill_type_ids[0]})
     names = [s["name"] for s in res.json()]
     assert names == ["千円あり"]
