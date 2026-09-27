@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "dev-secret-change-me"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
+    # エラー監視（Sentry）。DSN 未設定なら無効。本番は環境変数で設定する。
+    SENTRY_DSN: str = ""
+    ENVIRONMENT: str = "development"
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]

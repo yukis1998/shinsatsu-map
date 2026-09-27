@@ -7,3 +7,4 @@ pydantic-settings==2.7.0
 email-validator==2.2.0
 bcrypt==4.2.1
 pyjwt==2.10.1
+sentry-sdk[fastapi]==2.70.0

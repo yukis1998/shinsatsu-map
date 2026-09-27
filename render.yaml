@@ -28,3 +28,8 @@ services:
       # フロント(Vercel)の URL が決まったら、その値に更新する。
       - key: BACKEND_CORS_ORIGINS
         sync: false
+      # エラー監視(Sentry)。Sentryでプロジェクト作成後、DSN を Render に設定する。
+      - key: SENTRY_DSN
+        sync: false
+      - key: ENVIRONMENT
+        value: production
