@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { SITE_URL } from "@/lib/site";
 import AuthStatus from "./components/AuthStatus";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://shinsatsu-map.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: "新札マップ",
   description:
     "新札が手に入るATM・銀行窓口を、現地確認済みの情報でユーザー同士が共有する地図サービス",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     title: "新札マップ",
     description:
       "新札が「今そこで手に入る」場所を、現地確認済みの情報で共有する地図サービス",
-    url: "https://shinsatsu-map.vercel.app",
+    url: SITE_URL,
     siteName: "新札マップ",
     locale: "ja_JP",
     type: "website",

@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+import { SITE_HOST } from "@/lib/site";
+
 // SNS 共有時に表示される OGP 画像（1200x630）を動的生成する。
 export const runtime = "edge";
 export const alt = "新札マップ";
@@ -20,7 +22,7 @@ async function loadGoogleFont(text: string): Promise<ArrayBuffer> {
 export default async function OgImage() {
   const title = "新札マップ";
   const subtitle = "新札が「今そこで手に入る」場所を、現地確認済みで共有する地図サービス";
-  const url = "shinsatsu-map.vercel.app";
+  const url = SITE_HOST;
   const font = await loadGoogleFont(title + subtitle + url);
 
   return new ImageResponse(
